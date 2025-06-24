@@ -12,6 +12,7 @@ The inspiration for Ignite came from the complexity of setting up and maintainin
 - **Automatic State Management**: Built-in state binding without manual useState setup
 - **Seamless Navigation**: Simple navigation declarations that generate proper React Navigation code
 - **Convention over Configuration**: Sensible defaults for common patterns
+- **Flexible Package Support**: Use any npm package or custom component seamlessly
 
 ## How I Built the Project
 
@@ -21,15 +22,22 @@ The Ignite framework consists of four main components:
 The parser is the heart of the system, responsible for:
 - Converting `.ignite` files into an Abstract Syntax Tree (AST)
 - Extracting screen metadata (titles, navigation options, tab configurations)
+- Parsing import statements (default, named, namespace imports)
+- Handling state declarations with type inference
 - Preserving stylesheets and handling component hierarchy
 - Supporting complex prop parsing including state bindings and navigation actions
 
 ```typescript
-// Example of parsing a simple component
-<View style="container">
+// Example of parsing imports and custom components
+import { LinearGradient } from 'expo-linear-gradient'
+import firebase from 'firebase'
+
+state user=null
+state loading=false
+
+<LinearGradient colors={['#ff6b6b', '#4ecdc4']} style="gradient">
   <Text>Hello World</Text>
-  <Button onPress="go('/settings')">Settings</Button>
-</View>
+</LinearGradient>
 ```
 
 ### 2. **Generator (`generator.ts`)**
@@ -38,6 +46,7 @@ The generator transforms parsed AST into valid React Native code:
 - Generates automatic state management with proper TypeScript types
 - Handles complex prop transformations (style references, navigation bindings)
 - Creates complete functional components with hooks and imports
+- Supports any npm package or custom component
 
 ### 3. **Router System (`router.ts`)**
 Automatically generates navigation configuration:
@@ -90,6 +99,7 @@ One of the biggest challenges was handling the variety of prop types and formats
 - Style references (`style="container"` → `style={styles.container}`)
 - Navigation bindings (`onPress="go('/path')"`)
 - State bindings (`bind="username"`)
+- Custom expressions (`{value}`, `{styles.container}`)
 
 **Solution**: Implemented a character-by-character parser that handles quotes, braces, and different value types appropriately.
 
@@ -143,6 +153,31 @@ const COMPONENT_MAP: Record<string, string> = {
 // Generates: onPress={() => navigation.navigate('SettingsIndex')}
 ```
 
+### **Flexible Import System**
+```typescript
+// Supports any npm package
+import { LinearGradient } from 'expo-linear-gradient'
+import firebase from 'firebase'
+import * as Three from 'three'
+```
+
+## Version Comparison
+
+| Feature | v0.1.0 | v0.2.0 |
+|---------|--------|--------|
+| **Basic Components** | ✅ View, Text, Button, Input | ✅ All v0.1.0 + Pressable, Modal, SafeAreaView |
+| **State Management** | ✅ Basic state binding | ✅ Advanced state types (string, number, boolean, object, array) |
+| **Navigation** | ✅ Basic tab/stack navigation | ✅ Enhanced navigation with custom options |
+| **Styling** | ✅ StyleSheet integration | ✅ Advanced style expressions and references |
+| **Import System** | ❌ Hardcoded imports only | ✅ **Flexible imports (default, named, namespace)** |
+| **Custom Components** | ❌ Limited to predefined components | ✅ **Any component or npm package** |
+| **Function Support** | ❌ No custom functions | ✅ **Async and regular functions** |
+| **Package Support** | ❌ React Native only | ✅ **Any npm package (Firebase, Expo, etc.)** |
+| **Expression Support** | ❌ Limited expressions | ✅ **Full JSX expression support** |
+| **Type Safety** | ❌ Basic type inference | ✅ **Advanced type inference and validation** |
+| **Error Handling** | ❌ Basic error messages | ✅ **Comprehensive error handling** |
+| **Documentation** | ❌ Basic README | ✅ **Complete documentation with examples** |
+
 ## Installation
 
 ```bash
@@ -155,12 +190,26 @@ npm install ignite
 
 ```xml
 <!-- app/home/index.ignite -->
+import { LinearGradient } from 'expo-linear-gradient'
+import firebase from 'firebase'
+
 screen title="Home" isTabScreen="true" tabOrder="1" tabIcon="home"
 
+state user=null
+state loading=false
+
+async handleLogin() {
+  const result = await firebase.auth().signInWithEmailAndPassword(email, password)
+  setUser(result.user)
+  go('/profile')
+}
+
 <View style="container">
-  <Text style="title">Welcome to Ignite</Text>
-  <Input bind="username" placeholder="Enter username" />
-  <Button onPress="go('/profile')">Go to Profile</Button>
+  <LinearGradient colors={['#ff6b6b', '#4ecdc4']} style="gradient">
+    <Text style="title">Welcome to Ignite</Text>
+    <Input bind="username" placeholder="Enter username" />
+    <Button onPress="handleLogin()">Login</Button>
+  </LinearGradient>
 </View>
 
 const styles = StyleSheet.create({
@@ -171,6 +220,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  gradient: {
+    flex: 1,
+    borderRadius: 10,
   },
 });
 ```
@@ -193,6 +246,49 @@ npx ignite dev
 - **Advanced State Management**: Integration with Redux or Zustand
 - **Tab Navigation**: Easy tab-based navigation setup
 - **Type Safety**: Generated code with proper TypeScript support
+- **Flexible Imports**: Support for any npm package (default, named, namespace imports)
+- **Custom Components**: Use any React Native component or third-party library
+- **Function Support**: Write async and regular functions directly in `.ignite` files
+- **Expression Support**: Full JSX expression support with curly braces
+- **Package Integration**: Seamless integration with Firebase, Expo, and other popular libraries
+
+## Advanced Examples
+
+### Firebase Integration
+```xml
+import firebase from 'firebase'
+
+state user=null
+state messages=[]
+
+async loadMessages() {
+  const snapshot = await firebase.firestore().collection('messages').get()
+  setMessages(snapshot.docs.map(doc => doc.data()))
+}
+
+<List data={messages} renderItem="renderMessage" />
+```
+
+### Custom Components
+```xml
+import MyCustomButton from './components/MyCustomButton'
+
+<MyCustomButton onPress="handlePress()" customProp="value">
+  Click me
+</MyCustomButton>
+```
+
+### Complex State Management
+```xml
+state user={}
+state settings={darkMode: false, notifications: true}
+state items=[]
+
+async updateSettings(newSettings) {
+  setSettings({...settings, ...newSettings})
+  await AsyncStorage.setItem('settings', JSON.stringify(settings))
+}
+```
 
 ## Project Structure
 
@@ -206,6 +302,8 @@ your-project/
 │   │   │   └── index.ignite
 │   │   └── settings/
 │   │       └── index.ignite
+│   └── components/
+│       └── MyCustomButton.ignite
 └── .ignite/
     ├── screens/
     ├── router.js
@@ -218,6 +316,8 @@ The Ignite framework could be extended with:
 - **TypeScript Support**: Generate TypeScript instead of JavaScript
 - **Custom Component Libraries**: Support for third-party component mapping
 - **Documentation Generation**: Auto-generated component documentation
+- **Visual Editor**: Drag-and-drop interface for building `.ignite` files
+- **Plugin System**: Extensible architecture for custom transformations
 
 ## Contributing
 

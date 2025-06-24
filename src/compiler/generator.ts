@@ -1,18 +1,52 @@
-import { ParsedIgniteFile, IgniteNode } from './parser';
+import { ParsedIgniteFile, IgniteNode, ImportDeclaration } from './parser';
+import { COMPONENT_MAP } from './components';
 import { join } from 'path';
 import { writeFileSync, mkdirSync } from 'fs';
 
-const COMPONENT_MAP: Record<string, string> = {
-  View: 'View',
-  Text: 'Text',
-  Button: 'TouchableOpacity',
-  Input: 'TextInput',
-  Image: 'Image',
-  Scroll: 'ScrollView',
-  Stack: 'View',
-  Switch: 'Switch',
-  List: 'FlatList'
-};
+function generateImports(imports: ImportDeclaration[]): string {
+  const importLines: string[] = [];
+  
+  for (const imp of imports) {
+    switch (imp.type) {
+      case 'default':
+        importLines.push(`import ${imp.imports[0]} from '${imp.from}';`);
+        break;
+      case 'named':
+        importLines.push(`import { ${imp.imports.join(', ')} } from '${imp.from}';`);
+        break;
+      case 'namespace':
+        importLines.push(`import * as ${imp.alias} from '${imp.from}';`);
+        break;
+    }
+  }
+  
+  return importLines.join('\n');
+}
+
+function generateStates(states: Array<{ name: string; initialValue: any; type?: string }>): string {
+  return states.map(state => {
+    let initialValue = state.initialValue;
+    
+    // Convert the initial value to proper JavaScript representation
+    if (state.type === 'string' && typeof initialValue === 'string') {
+      initialValue = `'${initialValue}'`;
+    } else if (state.type === 'object') {
+      initialValue = JSON.stringify(initialValue);
+    } else if (state.type === 'array') {
+      initialValue = JSON.stringify(initialValue);
+    }
+    
+    const setterName = `set${state.name.charAt(0).toUpperCase() + state.name.slice(1)}`;
+    return `  const [${state.name}, ${setterName}] = useState(${initialValue});`;
+  }).join('\n');
+}
+
+function generateFunctions(functions: Array<{ name: string; isAsync: boolean; body: string }>): string {
+  return functions.map(func => {
+    const asyncKeyword = func.isAsync ? 'async ' : '';
+    return `  const ${func.name} = ${asyncKeyword}() => {\n    ${func.body.split('\n').join('\n    ')}\n  };`;
+  }).join('\n\n');
+}
 
 function generateComponent(node: IgniteNode, indent: number = 0, allRoutes: any[] = []): string {
   const spaces = '  '.repeat(indent);
@@ -21,6 +55,7 @@ function generateComponent(node: IgniteNode, indent: number = 0, allRoutes: any[
     return `${spaces}${node.text || ''}`;
   }
 
+  // Check if it's a known React Native component or a custom/imported component
   const componentName = COMPONENT_MAP[node.type] || node.type;
   const props: string[] = [];
   
@@ -34,13 +69,17 @@ function generateComponent(node: IgniteNode, indent: number = 0, allRoutes: any[
 
       props.push(`onPress={() => navigation.navigate('${targetComponentName}')}`);
     } else if (key === 'onPress' && typeof value === 'string') {
-      // Handle any string onPress value - just wrap it in an arrow function
-      props.push(`onPress={() => ${value}}`)
+      // Handle function calls - check if it includes parentheses
+      if (value.includes('(') && value.includes(')')) {
+        props.push(`onPress={() => ${value}}`);
+      } else {
+        props.push(`onPress={${value}}`);
+      }
     } else if (key === 'bind' && value && typeof value === 'object' && 'type' in value && value.type === 'state' && 'value' in value) {
       const stateValue = value.value as string;
       const setterName = `set${stateValue.charAt(0).toUpperCase() + stateValue.slice(1)}`;
 
-      if (node.type === 'Switch') {
+      if (node.type === 'Switch' || componentName === 'Switch') {
         if (stateValue === 'theme') {
           props.push(`value={${stateValue} === 'dark'}`);
           props.push(`onValueChange={(newValue) => ${setterName}(newValue ? 'dark' : 'light')}`);
@@ -48,18 +87,19 @@ function generateComponent(node: IgniteNode, indent: number = 0, allRoutes: any[
           props.push(`value={${stateValue}}`);
           props.push(`onValueChange={(newValue) => ${setterName}(newValue)}`);
         }
-      } else if (node.type === 'Input') {
+      } else if (node.type === 'Input' || componentName === 'TextInput') {
         props.push(`value={${stateValue}}`);
         props.push(`onChangeText={(text) => ${setterName}(text)}`);
+      } else {
+        // For custom components, just pass the value and onChange
+        props.push(`value={${stateValue}}`);
+        props.push(`onChange={(newValue) => ${setterName}(newValue)}`);
       }
-    } else if (key === 'source' && node.type === 'Image') {
-      // Handle Image source prop - support both URI and local images
+    } else if (key === 'source' && (node.type === 'Image' || componentName === 'Image')) {
       if (typeof value === 'string') {
         if (value.startsWith('http://') || value.startsWith('https://')) {
-          // Remote image
           props.push(`source={{uri: '${value}'}}`);
         } else {
-          // Local image - assume it's a require statement
           props.push(`source={require('${value}')}`);
         }
       }
@@ -78,6 +118,9 @@ function generateComponent(node: IgniteNode, indent: number = 0, allRoutes: any[
         
         props.push(`style={${styleValue}}`);
       }
+    } else if (typeof value === 'object' && 'type' in value && value.type === 'expression') {
+      // Handle JSX expressions from curly braces
+      props.push(`${key}={${value.value}}`);
     } else if (key === 'placeholder' && typeof value === 'string') {
       props.push(`placeholder="${value}"`);
     } else if (key === 'secureTextEntry' && (value === true || value === 'true')) {
@@ -94,11 +137,30 @@ function generateComponent(node: IgniteNode, indent: number = 0, allRoutes: any[
       props.push(`autoCapitalize="${value}"`);
     } else if (key === 'autoCorrect' && typeof value === 'boolean') {
       props.push(`autoCorrect={${value}}`);
-    } else if (key === 'label') {
-      let cleanedLabel = String(value).replace(/={true}/g, '').trim();
-      props.push(`label="${cleanedLabel}"`);
+    } else if (key === 'disabled' && typeof value === 'boolean') {
+      props.push(`disabled={${value}}`);
+    } else if (key === 'loading' && typeof value === 'boolean') {
+      props.push(`loading={${value}}`);
+    } else if (key === 'data' && typeof value === 'string') {
+      // For FlatList or custom list components
+      props.push(`data={${value}}`);
+    } else if (key === 'renderItem' && typeof value === 'string') {
+      props.push(`renderItem={${value}}`);
+    } else if (key === 'keyExtractor' && typeof value === 'string') {
+      props.push(`keyExtractor={${value}}`);
+    } else if (key === 'onRefresh' && typeof value === 'string') {
+      props.push(`onRefresh={${value}}`);
+    } else if (key === 'refreshing' && typeof value === 'string') {
+      props.push(`refreshing={${value}}`);
+    } else if (key === 'onEndReached' && typeof value === 'string') {
+      props.push(`onEndReached={${value}}`);
     } else if (typeof value === 'string' && key !== 'bind' && key !== 'source') {
-      props.push(`${key}="${value}"`);
+      // Handle other string props - check if they should be treated as expressions
+      if (value.startsWith('{') && value.endsWith('}')) {
+        props.push(`${key}=${value}`);
+      } else {
+        props.push(`${key}="${value}"`);
+      }
     } else if (typeof value === 'number' || typeof value === 'boolean') {
       props.push(`${key}={${value}}`);
     }
@@ -112,7 +174,7 @@ function generateComponent(node: IgniteNode, indent: number = 0, allRoutes: any[
   }
 
   // Handle different component types
-  if (node.type === 'Button') {
+  if (node.type === 'Button' || (COMPONENT_MAP[node.type] === 'TouchableOpacity' && node.type === 'Button')) {
     const buttonContent = node.children
       .map((child: IgniteNode) => {
         if (child.type === 'text') {
@@ -123,7 +185,7 @@ function generateComponent(node: IgniteNode, indent: number = 0, allRoutes: any[
       .join('\n');
     
     return `${spaces}<${componentName}${propsString}>\n${buttonContent}\n${spaces}</${componentName}>`;
-  } else if (node.type === 'Text') {
+  } else if (node.type === 'Text' || componentName === 'Text') {
     if (node.text) {
       return `${spaces}<${componentName}${propsString}>${node.text}</${componentName}>`;
     } else if (node.children.length > 0) {
@@ -131,7 +193,18 @@ function generateComponent(node: IgniteNode, indent: number = 0, allRoutes: any[
         .filter(child => child.type === 'text')
         .map(child => child.text)
         .join('');
-      return `${spaces}<${componentName}${propsString}>${textContent}</${componentName}>`;
+      
+      if (textContent) {
+        return `${spaces}<${componentName}${propsString}>${textContent}</${componentName}>`;
+      }
+      
+      // Handle nested components within Text
+      const nestedContent = node.children
+        .map((child: IgniteNode) => generateComponent(child, indent + 1, allRoutes))
+        .filter(content => content.trim())
+        .join('\n');
+      
+      return `${spaces}<${componentName}${propsString}>\n${nestedContent}\n${spaces}</${componentName}>`;
     } else {
       return `${spaces}<${componentName}${propsString} />`;
     }
@@ -150,57 +223,29 @@ function generateComponent(node: IgniteNode, indent: number = 0, allRoutes: any[
 }
 
 export function generateReactNativeCode(parsed: ParsedIgniteFile, outputPath: string, outputFileName: string, allRoutes: any[]): void {
-  // Collect states with better type inference
-  const states: { name: string; defaultValue: string; type: 'text' | 'boolean' | 'number' }[] = [];
+  // Generate import statements
+  const customImports = generateImports(parsed.imports);
+  
+  // Default React Native imports
+  const defaultImports = [
+    "import React, { useState, useEffect } from 'react';",
+    "import { View, Text, TouchableOpacity, TextInput, Image, ScrollView, Switch, FlatList, StyleSheet } from 'react-native';",
+    "import { useNavigation } from '@react-navigation/native';"
+  ];
 
-  function collectStates(node: IgniteNode) {
-    if (node.props && node.props.bind && typeof node.props.bind === 'object' && 'type' in node.props.bind && node.props.bind.type === 'state' && 'value' in node.props.bind) {
-      const stateName = node.props.bind.value as string;
-      let defaultValue: string;
-      let stateType: 'text' | 'boolean' | 'number' = 'text';
+  // Combine default and custom imports
+  const allImports = [
+    ...defaultImports,
+    ...(customImports ? [customImports] : [])
+  ].join('\n');
 
-      if (node.type === 'Switch') {
-        if (stateName === 'theme') {
-          defaultValue = "'light'";
-          stateType = 'text';
-        } else if (stateName.includes('Mode') || stateName.includes('Enabled') || stateName.includes('Services')) {
-          defaultValue = "false";
-          stateType = 'boolean';
-        } else {
-          defaultValue = "false";
-          stateType = 'boolean';
-        }
-      } else if (node.type === 'Input') {
-        if (node.props.keyboardType === 'numeric' || node.props.keyboardType === 'number-pad' || stateName.toLowerCase().includes('interval') || stateName.toLowerCase().includes('count')) {
-          defaultValue = "0";
-          stateType = 'number';
-        } else {
-          defaultValue = "''";
-          stateType = 'text';
-        }
-      } else {
-        defaultValue = "''";
-        stateType = 'text';
-      }
+  // Generate state declarations
+  const stateDeclarations = generateStates(parsed.states);
 
-      if (!states.some(s => s.name === stateName)) {
-        states.push({ name: stateName, defaultValue, type: stateType });
-      }
-    }
-    if (node.children) {
-      node.children.forEach(collectStates);
-    }
-  }
-
-  parsed.nodes.forEach(collectStates);
-
-  // Generate useState declarations with proper types
-  const useStateDeclarations = states.map(s => {
-    return `  const [${s.name}, set${s.name.charAt(0).toUpperCase() + s.name.slice(1)}] = useState(${s.defaultValue});`;
-  }).join('\n');
+  // Generate functions
+  const functionDeclarations = generateFunctions(parsed.functions);
 
   // Check if any custom functions are used that might need additional imports
-  // This is a generic check - users can define their own functions
   const codeString = JSON.stringify(parsed.nodes);
   const needsLinking = codeString.includes('Linking.') || codeString.includes('openURL');
 
@@ -208,16 +253,13 @@ export function generateReactNativeCode(parsed: ParsedIgniteFile, outputPath: st
   const stylesheetCode = parsed.rawStylesheet || parsed.styles || "const styles = StyleSheet.create({});";
 
   const componentCode = [
-    "import React, { useState } from 'react';",
-    needsLinking 
-      ? "import { View, Text, TouchableOpacity, TextInput, Image, ScrollView, Switch, FlatList, StyleSheet, Linking } from 'react-native';"
-      : "import { View, Text, TouchableOpacity, TextInput, Image, ScrollView, Switch, FlatList, StyleSheet } from 'react-native';",
-    "import { useNavigation } from '@react-navigation/native';",
+    allImports,
     "",
     "export default function Screen() {",
     "  const navigation = useNavigation();",
-    useStateDeclarations,
+    stateDeclarations,
     "",
+    ...(functionDeclarations ? [functionDeclarations, ""] : []),
     "  return (",
     parsed.nodes.map(node => generateComponent(node, 2, allRoutes)).join('\n'),
     "  );",

@@ -7,6 +7,13 @@ export interface IgniteNode {
   text?: string;
 }
 
+export interface ImportDeclaration {
+  type: 'default' | 'named' | 'namespace';
+  imports: string[]; // e.g., ['View', 'Text'] or ['React'] or ['*']
+  from: string; // package name
+  alias?: string; // for namespace imports
+}
+
 export interface ParsedIgniteFile {
   screen: {
     title?: string;
@@ -16,67 +23,325 @@ export interface ParsedIgniteFile {
     isTabScreen?: boolean;
     headerShown?: boolean;
   };
+  imports: ImportDeclaration[];
+  states: Array<{
+    name: string;
+    initialValue: any;
+    type?: 'string' | 'number' | 'boolean' | 'object' | 'array';
+  }>;
+  functions: Array<{
+    name: string;
+    isAsync: boolean;
+    body: string;
+  }>;
   nodes: IgniteNode[];
-  styles?: string; // Raw stylesheet content
-  rawStylesheet?: string; // Original stylesheet for preservation
+  styles?: string;
+  rawStylesheet?: string;
 }
 
 export function parseIgniteContent(content: string): ParsedIgniteFile {
   const result: ParsedIgniteFile = {
     screen: {},
+    imports: [],
+    states: [],
+    functions: [],
     nodes: [],
     styles: undefined,
     rawStylesheet: undefined
   };
 
-  // First, extract and preserve the stylesheet
-  const stylesheetMatch = content.match(/const\s+styles\s*=\s*StyleSheet\.create\s*\(\s*{[\s\S]*?}\s*\)\s*;?/);
-  if (stylesheetMatch) {
-    result.rawStylesheet = stylesheetMatch[0];
-    result.styles = stylesheetMatch[0];
-    // Remove stylesheet from content to avoid parsing it as components
-    content = content.replace(stylesheetMatch[0], '').trim();
+  const lines = content.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Parse import statements
+    if (line.startsWith('import ')) {
+      const importDecl = parseImportStatement(line);
+      if (importDecl) {
+        result.imports.push(importDecl);
+      }
+      i++;
+      continue;
+    }
+
+    // Parse simple import statements (just package names)
+    if (isSimpleImport(line)) {
+      const importDecl = parseSimpleImport(line);
+      if (importDecl) {
+        result.imports.push(importDecl);
+      }
+      i++;
+      continue;
+    }
+
+    // Parse screen declaration
+    if (line.startsWith('screen')) {
+      const screenProps = parseProps(line.replace('screen', '').trim());
+      result.screen = {
+        ...screenProps,
+        tabOrder: screenProps.tabOrder ? parseInt(screenProps.tabOrder) : undefined,
+        isTabScreen: screenProps.isTabScreen === 'true' || screenProps.isTabScreen === true,
+        tabIcon: screenProps.tabIcon,
+        headerShown: screenProps.headerShown === undefined ? true : 
+                     screenProps.headerShown === 'false' ? false :
+                     screenProps.headerShown === false ? false : 
+                     Boolean(screenProps.headerShown)
+      };
+      i++;
+      continue;
+    }
+
+    // Parse state declarations
+    if (line.startsWith('state ')) {
+      const stateDecl = parseStateDeclaration(line);
+      if (stateDecl) {
+        result.states.push(stateDecl);
+      }
+      i++;
+      continue;
+    }
+
+    // Parse function declarations
+    if (line.startsWith('async ') || line.match(/^\w+\s*\(/)) {
+      const funcResult = parseFunctionDeclaration(lines, i);
+      if (funcResult.func) {
+        result.functions.push(funcResult.func);
+      }
+      i = funcResult.nextIndex;
+      continue;
+    }
+
+    // Parse stylesheet
+    if (line.startsWith('const styles') || line.includes('StyleSheet.create')) {
+      const stylesheetResult = parseStylesheet(lines, i);
+      result.rawStylesheet = stylesheetResult.stylesheet;
+      result.styles = stylesheetResult.stylesheet;
+      i = stylesheetResult.nextIndex;
+      continue;
+    }
+
+    // Parse JSX nodes
+    if (line.startsWith('<')) {
+      const nodeResult = parseNode(lines, i);
+      if (nodeResult.node) {
+        result.nodes.push(nodeResult.node);
+      }
+      i = nodeResult.nextIndex;
+      continue;
+    }
+
+    i++;
   }
 
-  const lines = content.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  return result;
+}
 
-  // Parse screen declaration with enhanced metadata
-  const screenLine = lines.find(line => line.startsWith('screen'));
-  if (screenLine) {
-    const screenProps = parseProps(screenLine.replace('screen', '').trim());
-    result.screen = {
-      ...screenProps,
-      tabOrder: screenProps.tabOrder ? parseInt(screenProps.tabOrder) : undefined,
-      isTabScreen: screenProps.isTabScreen === 'true' || screenProps.isTabScreen === true,
-      tabIcon: screenProps.tabIcon,
-      // FIX: Properly handle headerShown boolean conversion
-      headerShown: screenProps.headerShown === undefined ? true : 
-                   screenProps.headerShown === 'false' ? false :
-                   screenProps.headerShown === false ? false : 
-                   Boolean(screenProps.headerShown)
+function parseImportStatement(line: string): ImportDeclaration | null {
+  // Handle: import React from 'react';
+  const defaultImportMatch = line.match(/^import\s+(\w+)\s+from\s+['"]([^'"]+)['"];?$/);
+  if (defaultImportMatch) {
+    return {
+      type: 'default',
+      imports: [defaultImportMatch[1]],
+      from: defaultImportMatch[2]
     };
   }
 
-  // Filter out screen line and empty lines
-  const contentLines = lines.filter(line => 
-    !line.startsWith('screen') && 
-    line.length > 0 &&
-    !line.startsWith('const styles') &&
-    !line.includes('StyleSheet.create')
-  );
-  
-  // Parse the content
-  let i = 0;
-  while (i < contentLines.length) {
-    const node = parseNode(contentLines, i);
-    if (node.node) {
-      result.nodes.push(node.node);
-    }
-    i = node.nextIndex;
+  // Handle: import { View, Text } from 'react-native';
+  const namedImportMatch = line.match(/^import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]([^'"]+)['"];?$/);
+  if (namedImportMatch) {
+    const imports = namedImportMatch[1].split(',').map(imp => imp.trim());
+    return {
+      type: 'named',
+      imports: imports,
+      from: namedImportMatch[2]
+    };
   }
 
-  // console.log('Parsed result:', JSON.stringify(result, null, 2));
-  return result;
+  // Handle: import * as Three from 'three';
+  const namespaceImportMatch = line.match(/^import\s+\*\s+as\s+(\w+)\s+from\s+['"]([^'"]+)['"];?$/);
+  if (namespaceImportMatch) {
+    return {
+      type: 'namespace',
+      imports: ['*'],
+      from: namespaceImportMatch[2],
+      alias: namespaceImportMatch[1]
+    };
+  }
+
+  return null;
+}
+
+function isSimpleImport(line: string): boolean {
+  // Check if line is just a package name (simple import)
+  return /^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)*$/.test(line) && 
+         !line.includes(' ') && 
+         !line.startsWith('<') &&
+         !line.includes('=');
+}
+
+function parseSimpleImport(line: string): ImportDeclaration | null {
+  // Convert simple package names to default imports
+  // e.g., "firebase" becomes import firebase from 'firebase'
+  if (isSimpleImport(line)) {
+    return {
+      type: 'default',
+      imports: [line],
+      from: line
+    };
+  }
+  return null;
+}
+
+function parseStateDeclaration(line: string): { name: string; initialValue: any; type?: 'string' | 'number' | 'boolean' | 'object' | 'array' } | null {
+  // Handle: state count=0, state name="", state items=[], state user={}, state loading=false
+  const match = line.match(/^state\s+(\w+)\s*=\s*(.+)$/);
+  if (match) {
+    const name = match[1];
+    const valueStr = match[2];
+    
+    let initialValue: any;
+    let type: 'string' | 'number' | 'boolean' | 'object' | 'array' | undefined;
+
+    // Parse the initial value
+    if (valueStr === 'true' || valueStr === 'false') {
+      initialValue = valueStr === 'true';
+      type = 'boolean';
+    } else if (!isNaN(Number(valueStr))) {
+      initialValue = Number(valueStr);
+      type = 'number';
+    } else if (valueStr.startsWith('"') && valueStr.endsWith('"')) {
+      initialValue = valueStr.slice(1, -1);
+      type = 'string';
+    } else if (valueStr.startsWith("'") && valueStr.endsWith("'")) {
+      initialValue = valueStr.slice(1, -1);
+      type = 'string';
+    } else if (valueStr.startsWith('[') && valueStr.endsWith(']')) {
+      try {
+        initialValue = JSON.parse(valueStr);
+        type = 'array';
+      } catch {
+        initialValue = [];
+        type = 'array';
+      }
+    } else if (valueStr.startsWith('{') && valueStr.endsWith('}')) {
+      try {
+        initialValue = JSON.parse(valueStr);
+        type = 'object';
+      } catch {
+        initialValue = {};
+        type = 'object';
+      }
+    } else {
+      // Default to string
+      initialValue = valueStr;
+      type = 'string';
+    }
+
+    return { name, initialValue, type };
+  }
+  return null;
+}
+
+function parseFunctionDeclaration(lines: string[], startIndex: number): { func: any | null, nextIndex: number } {
+  const line = lines[startIndex];
+  
+  // Handle async functions: async functionName() {
+  const asyncMatch = line.match(/^async\s+(\w+)\s*\([^)]*\)\s*\{?$/);
+  if (asyncMatch) {
+    const funcName = asyncMatch[1];
+    return parseFunctionBody(lines, startIndex, funcName, true);
+  }
+
+  // Handle regular functions: functionName() {
+  const funcMatch = line.match(/^(\w+)\s*\([^)]*\)\s*\{?$/);
+  if (funcMatch) {
+    const funcName = funcMatch[1];
+    return parseFunctionBody(lines, startIndex, funcName, false);
+  }
+
+  return { func: null, nextIndex: startIndex + 1 };
+}
+
+function parseFunctionBody(lines: string[], startIndex: number, name: string, isAsync: boolean): { func: any, nextIndex: number } {
+  let body = '';
+  let braceCount = 0;
+  let i = startIndex;
+  
+  // Check if opening brace is on the same line
+  if (lines[i].includes('{')) {
+    braceCount = 1;
+    const afterBrace = lines[i].split('{').slice(1).join('{');
+    if (afterBrace.trim()) {
+      body += afterBrace + '\n';
+    }
+    i++;
+  }
+
+  // Collect function body
+  while (i < lines.length && (braceCount > 0 || body === '')) {
+    const line = lines[i];
+    
+    if (line.includes('{')) {
+      braceCount += (line.match(/\{/g) || []).length;
+    }
+    if (line.includes('}')) {
+      braceCount -= (line.match(/\}/g) || []).length;
+    }
+
+    if (braceCount > 0) {
+      body += line + '\n';
+    } else if (line.includes('}')) {
+      // Include content before the closing brace
+      const beforeBrace = line.substring(0, line.lastIndexOf('}'));
+      if (beforeBrace.trim()) {
+        body += beforeBrace + '\n';
+      }
+      break;
+    }
+    
+    i++;
+  }
+
+  return {
+    func: {
+      name,
+      isAsync,
+      body: body.trim()
+    },
+    nextIndex: i + 1
+  };
+}
+
+function parseStylesheet(lines: string[], startIndex: number): { stylesheet: string, nextIndex: number } {
+  let stylesheet = '';
+  let braceCount = 0;
+  let i = startIndex;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    stylesheet += line + '\n';
+    
+    if (line.includes('{')) {
+      braceCount += (line.match(/\{/g) || []).length;
+    }
+    if (line.includes('}')) {
+      braceCount -= (line.match(/\}/g) || []).length;
+    }
+
+    if (braceCount === 0 && stylesheet.includes('StyleSheet.create')) {
+      break;
+    }
+    
+    i++;
+  }
+
+  return {
+    stylesheet: stylesheet.trim(),
+    nextIndex: i + 1
+  };
 }
 
 function parseNode(lines: string[], startIndex: number): { node: IgniteNode | null, nextIndex: number } {
@@ -102,7 +367,7 @@ function parseNode(lines: string[], startIndex: number): { node: IgniteNode | nu
     };
   }
 
-  // Check if it's an opening tag - IMPROVED REGEX
+  // Check if it's an opening tag
   const openTagMatch = line.match(/^<(\w+)((?:\s+[^>]*)?)\s*>(.*)$/);
   if (openTagMatch) {
     const [, tagName, propsStr, remainingContent] = openTagMatch;
@@ -111,7 +376,6 @@ function parseNode(lines: string[], startIndex: number): { node: IgniteNode | nu
 
     // Check if there's content on the same line
     if (remainingContent && !remainingContent.startsWith('</')) {
-      // Check if it's a complete tag on one line like <Text>Content</Text>
       const sameLineCloseMatch = remainingContent.match(/^(.*)<\/\w+>$/);
       if (sameLineCloseMatch) {
         const textContent = sameLineCloseMatch[1].trim();
@@ -120,7 +384,6 @@ function parseNode(lines: string[], startIndex: number): { node: IgniteNode | nu
         }
         return { node, nextIndex: startIndex + 1 };
       } else {
-        // Content continues, treat as text
         node.children.push({ type: 'text', props: {}, children: [], text: remainingContent });
       }
     }
@@ -132,14 +395,11 @@ function parseNode(lines: string[], startIndex: number): { node: IgniteNode | nu
     while (currentIndex < lines.length) {
       const currentLine = lines[currentIndex];
       
-      // Check if this is the closing tag
       if (currentLine === closingTag) {
         return { node, nextIndex: currentIndex + 1 };
       }
       
-      // Check if this line contains the closing tag
       if (currentLine.includes(closingTag)) {
-        // Extract content before the closing tag
         const beforeClosing = currentLine.substring(0, currentLine.indexOf(closingTag)).trim();
         if (beforeClosing) {
           node.children.push({ type: 'text', props: {}, children: [], text: beforeClosing });
@@ -147,7 +407,6 @@ function parseNode(lines: string[], startIndex: number): { node: IgniteNode | nu
         return { node, nextIndex: currentIndex + 1 };
       }
       
-      // Parse child node
       if (currentLine.startsWith('<')) {
         const childResult = parseNode(lines, currentIndex);
         if (childResult.node) {
@@ -155,7 +414,6 @@ function parseNode(lines: string[], startIndex: number): { node: IgniteNode | nu
         }
         currentIndex = childResult.nextIndex;
       } else {
-        // It's text content
         node.children.push({ type: 'text', props: {}, children: [], text: currentLine });
         currentIndex++;
       }
@@ -164,14 +422,12 @@ function parseNode(lines: string[], startIndex: number): { node: IgniteNode | nu
     return { node, nextIndex: currentIndex };
   }
 
-  // If it's not a tag, treat as text
   return {
     node: { type: 'text', props: {}, children: [], text: line },
     nextIndex: startIndex + 1
   };
 }
 
-// Enhanced prop parser with better boolean handling
 function parseProps(propsString: string): Record<string, any> {
   const props: Record<string, any> = {};
   
@@ -180,9 +436,8 @@ function parseProps(propsString: string): Record<string, any> {
   }
 
   const trimmed = propsString.trim();
-  
-  // Handle attributes more carefully by parsing character by character
   let i = 0;
+  
   while (i < trimmed.length) {
     // Skip whitespace
     while (i < trimmed.length && /\s/.test(trimmed[i])) {
@@ -214,7 +469,7 @@ function parseProps(propsString: string): Record<string, any> {
         i++;
       }
       
-      // Check for curly brace expressions {styles.container}
+      // Handle curly brace expressions {value}
       if (i < trimmed.length && trimmed[i] === '{') {
         i++; // skip opening brace
         let value = '';
@@ -233,23 +488,10 @@ function parseProps(propsString: string): Record<string, any> {
           i++;
         }
         
-        // Handle the curly brace expression
-        if (attrName === 'style') {
-          props[attrName] = value; // Store as "styles.container" without quotes
-        } else {
-          // Try to parse as boolean, number, or keep as expression
-          if (value === 'true') {
-            props[attrName] = true;
-          } else if (value === 'false') {
-            props[attrName] = false;
-          } else if (!isNaN(Number(value)) && value.trim() !== '') {
-            props[attrName] = Number(value);
-          } else {
-            props[attrName] = `{${value}}`;
-          }
-        }
+        // Store the expression as-is for flexible evaluation
+        props[attrName] = { type: 'expression', value };
       }
-      // Extract quoted value
+      // Handle quoted values
       else if (i < trimmed.length && (trimmed[i] === '"' || trimmed[i] === "'")) {
         const quote = trimmed[i];
         i++; // skip opening quote
@@ -264,38 +506,20 @@ function parseProps(propsString: string): Record<string, any> {
           i++; // skip closing quote
         }
         
-        // Process the extracted value
+        // Handle special cases
         if (attrName === 'onPress' && value && value.startsWith("go('") && value.endsWith("')")) {
-          const navPath = value.slice(4, -2); // Remove go(' and ')
-          props[attrName] = {
-            type: 'navigation',
-            value: navPath
-          };
+          const navPath = value.slice(4, -2);
+          props[attrName] = { type: 'navigation', value: navPath };
         } else if (attrName === 'bind' && value) {
-          props[attrName] = {
-            type: 'state',
-            value: value
-          };
-        } else if (attrName === 'keyboardType') {
-          // Validate keyboard type
-          const validTypes = ['default', 'email-address', 'numeric', 'phone-pad', 'number-pad', 'decimal-pad', 'visible-password', 'ascii-capable', 'numbers-and-punctuation', 'url', 'name-phone-pad', 'twitter', 'web-search'];
-          props[attrName] = validTypes.includes(value) ? value : 'default';
-        } else if (attrName === 'autoCapitalize') {
-          // Validate auto capitalize
-          const validValues = ['none', 'sentences', 'words', 'characters'];
-          props[attrName] = validValues.includes(value) ? value : 'sentences';
-        } else if (attrName === 'textContentType') {
-          // Handle text content type for iOS
-          props[attrName] = value;
-        } else if (attrName === 'returnKeyType') {
-          // Handle return key type
-          props[attrName] = value;
+          props[attrName] = { type: 'state', value: value };
         } else {
-          // FIX: Properly handle boolean string values
+          // Type conversion
           if (value === 'true') {
             props[attrName] = true;
           } else if (value === 'false') {
             props[attrName] = false;
+          } else if (!isNaN(Number(value)) && value.trim() !== '') {
+            props[attrName] = Number(value);
           } else {
             props[attrName] = value;
           }
@@ -308,7 +532,6 @@ function parseProps(propsString: string): Record<string, any> {
           i++;
         }
         
-        // FIX: Better type conversion for unquoted values
         if (value === 'true') {
           props[attrName] = true;
         } else if (value === 'false') {
@@ -320,7 +543,7 @@ function parseProps(propsString: string): Record<string, any> {
         }
       }
     } else {
-      // Boolean attribute (no value) - defaults to true
+      // Boolean attribute (no value)
       props[attrName] = true;
     }
   }
