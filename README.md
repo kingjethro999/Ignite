@@ -528,11 +528,8 @@ your-project/
 ## Future Enhancements
 
 The Ignite framework could be extended with:
-- **TypeScript Support**: Generate TypeScript instead of JavaScript
-- **Custom Component Libraries**: Support for third-party component mapping
 - **Documentation Generation**: Auto-generated component documentation
 - **Visual Editor**: Drag-and-drop interface for building `.ignite` files
-- **Plugin System**: Extensible architecture for custom transformations
 
 ## Contributing
 
