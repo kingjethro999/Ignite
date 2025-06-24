@@ -1,0 +1,108 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "scopeName": "source.ignite",
+  "patterns": [
+    { "include": "#screen_line" },
+    { "include": "#tags" }
+  ],
+  "repository": {
+    "screen_line": {
+      "name": "meta.declaration.screen.ignite",
+      "begin": "(^\\s*)(screen)\\b",
+      "beginCaptures": {
+        "2": { "name": "keyword.control.ignite" }
+      },
+      "end": "(?=$)",
+      "patterns": [
+        { "include": "#attributes" }
+      ]
+    },
+    "tags": {
+      "patterns": [
+        { "include": "#self_closing_tag" },
+        { "include": "#open_tag" },
+        { "include": "#close_tag" }
+      ]
+    },
+    "open_tag": {
+      "begin": "(<)([A-Z][a-zA-Z0-9]*)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.ignite" },
+        "2": { "name": "entity.name.tag.ignite" }
+      },
+      "end": "(>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.end.ignite" }
+      },
+      "name": "meta.tag.ignite",
+      "patterns": [
+        { "include": "#attributes" }
+      ]
+    },
+    "self_closing_tag": {
+      "begin": "(<)([A-Z][a-zA-Z0-9]*)",
+      "beginCaptures": {
+        "1": { "name": "punctuation.definition.tag.begin.ignite" },
+        "2": { "name": "entity.name.tag.ignite" }
+      },
+      "end": "(/)(>)",
+      "endCaptures": {
+        "1": { "name": "punctuation.definition.tag.end.ignite" },
+        "2": { "name": "punctuation.definition.tag.end.ignite" }
+      },
+      "name": "meta.tag.ignite",
+      "patterns": [
+        { "include": "#attributes" }
+      ]
+    },
+    "close_tag": {
+      "match": "(<)(/)([A-Z][a-zA-Z0-9]*)(>)",
+      "captures": {
+        "1": { "name": "punctuation.definition.tag.begin.ignite" },
+        "2": { "name": "punctuation.definition.tag.begin.ignite" },
+        "3": { "name": "entity.name.tag.ignite" },
+        "4": { "name": "punctuation.definition.tag.end.ignite" }
+      },
+      "name": "meta.tag.ignite"
+    },
+    "attributes": {
+      "patterns": [
+        { "include": "#attribute_with_value" }
+      ]
+    },
+    "attribute_with_value": {
+      "begin": "\\b([a-zA-Z][a-zA-Z-]*)\\s*(=)",
+      "beginCaptures": {
+        "1": { "name": "entity.other.attribute-name.ignite" },
+        "2": { "name": "punctuation.separator.key-value.ignite" }
+      },
+      "end": "(?=[\\s>/])",
+      "patterns": [
+        { "include": "#string_double_quoted" },
+        { "include": "#expression_braces" },
+        { "include": "#boolean" }
+      ]
+    },
+    "string_double_quoted": {
+      "name": "string.quoted.double.ignite",
+      "begin": "\"",
+      "beginCaptures": { "0": { "name": "punctuation.definition.string.begin.ignite" } },
+      "end": "\"",
+      "endCaptures": { "0": { "name": "punctuation.definition.string.end.ignite" } }
+    },
+    "expression_braces": {
+      "name": "meta.embedded.expression.ignite",
+      "begin": "\\{",
+      "beginCaptures": { "0": { "name": "punctuation.section.embedded.begin.ignite" } },
+      "end": "\\}",
+      "endCaptures": { "0": { "name": "punctuation.section.embedded.end.ignite" } },
+      "patterns": [
+        { "include": "source.js" }
+      ]
+    },
+    "boolean": {
+      "name": "constant.language.boolean.ignite",
+      "match": "\\b(true|false)\\b"
+    }
+  }
+} 
