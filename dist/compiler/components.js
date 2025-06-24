@@ -1,53 +1,111 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.COMPONENT_PROPS = exports.STYLE_PROPS = exports.COMPONENT_MAP = void 0;
+exports.COMPONENT_PROPS = exports.STYLE_PROPS = exports.PACKAGE_COMPONENTS = exports.DEFAULT_RN_COMPONENTS = exports.COMPONENT_MAP = void 0;
+exports.isCustomComponent = isCustomComponent;
+exports.getComponentName = getComponentName;
+exports.detectRequiredImports = detectRequiredImports;
+// Enhanced component mapping with flexible package support
 exports.COMPONENT_MAP = {
-    // Layout Components
+    // Core React Native Components (always available)
     View: 'View',
+    Text: 'Text',
+    Image: 'Image',
+    ScrollView: 'ScrollView',
+    FlatList: 'FlatList',
+    TextInput: 'TextInput',
+    TouchableOpacity: 'TouchableOpacity',
+    Switch: 'Switch',
+    Button: 'Button',
+    ActivityIndicator: 'ActivityIndicator',
+    Modal: 'Modal',
+    SafeAreaView: 'SafeAreaView',
+    // Common aliases for convenience
     Stack: 'View',
     Scroll: 'ScrollView',
-    Safe: 'SafeAreaView',
-    Modal: 'Modal',
-    Pressable: 'Pressable',
-    // Text Components
-    Text: 'Text',
-    Heading: 'Text',
-    Label: 'Text',
-    // Input Components
-    Input: 'TextInput',
-    TextArea: 'TextInput',
-    Switch: 'Switch',
-    Checkbox: 'TouchableOpacity',
-    Radio: 'TouchableOpacity',
-    Slider: 'Slider',
-    // Button Components
-    Button: 'TouchableOpacity',
-    IconButton: 'TouchableOpacity',
-    Link: 'TouchableOpacity',
-    // Media Components
-    Image: 'Image',
-    Video: 'Video',
-    Camera: 'Camera',
-    // List Components
     List: 'FlatList',
-    Grid: 'FlatList',
-    // Navigation Components
-    Tab: 'View',
-    Drawer: 'View',
-    // Feedback Components
-    Alert: 'Alert',
-    Toast: 'Toast',
+    Input: 'TextInput',
     Loading: 'ActivityIndicator',
-    // Form Components
-    Form: 'View',
-    Field: 'View',
-    Select: 'Picker',
-    // Chart Components
-    Chart: 'View',
-    Bar: 'View',
-    Line: 'View',
-    Pie: 'View'
+    Safe: 'SafeAreaView',
+    // Pressable components
+    Pressable: 'Pressable',
+    // Keep flexible - unknown components will be passed through as-is
+    // This allows for third-party and custom components
 };
+// Core React Native components that should always be imported
+exports.DEFAULT_RN_COMPONENTS = new Set([
+    'View', 'Text', 'Image', 'ScrollView', 'FlatList',
+    'TextInput', 'TouchableOpacity', 'Switch', 'Button',
+    'ActivityIndicator', 'Modal', 'SafeAreaView', 'Pressable'
+]);
+// Components that require specific packages (commonly used)
+exports.PACKAGE_COMPONENTS = {
+    // React Navigation
+    'NavigationContainer': { package: '@react-navigation/native', import: 'NavigationContainer', type: 'named' },
+    'createStackNavigator': { package: '@react-navigation/stack', import: 'createStackNavigator', type: 'named' },
+    'createBottomTabNavigator': { package: '@react-navigation/bottom-tabs', import: 'createBottomTabNavigator', type: 'named' },
+    'createDrawerNavigator': { package: '@react-navigation/drawer', import: 'createDrawerNavigator', type: 'named' },
+    // Expo Components
+    'LinearGradient': { package: 'expo-linear-gradient', import: 'LinearGradient', type: 'default' },
+    'Camera': { package: 'expo-camera', import: 'Camera', type: 'named' },
+    'MapView': { package: 'react-native-maps', import: 'MapView', type: 'default' },
+    // Popular UI Libraries
+    'Icon': { package: 'react-native-vector-icons/Ionicons', import: 'default', type: 'default' },
+    'FAB': { package: 'react-native-paper', import: 'FAB', type: 'named' },
+    'Card': { package: 'react-native-paper', import: 'Card', type: 'named' },
+    // Gesture Handler
+    'PanGestureHandler': { package: 'react-native-gesture-handler', import: 'PanGestureHandler', type: 'named' },
+    'TapGestureHandler': { package: 'react-native-gesture-handler', import: 'TapGestureHandler', type: 'named' },
+};
+// Function to determine if a component should be passed through as custom
+function isCustomComponent(componentName) {
+    // If it's not in our known mappings and not in package components, treat as custom
+    return !exports.COMPONENT_MAP[componentName] && !exports.PACKAGE_COMPONENTS[componentName];
+}
+// Function to get the actual component name to use in JSX
+function getComponentName(componentName) {
+    // Return mapped name if exists, otherwise return as-is (for custom components)
+    return exports.COMPONENT_MAP[componentName] || componentName;
+}
+// Function to detect required imports from component usage
+function detectRequiredImports(componentNames) {
+    const reactNative = [];
+    const packages = [];
+    const custom = [];
+    const packageMap = new Map();
+    for (const componentName of componentNames) {
+        if (exports.DEFAULT_RN_COMPONENTS.has(componentName) || exports.COMPONENT_MAP[componentName]) {
+            const rnComponent = exports.COMPONENT_MAP[componentName] || componentName;
+            if (exports.DEFAULT_RN_COMPONENTS.has(rnComponent)) {
+                reactNative.push(rnComponent);
+            }
+        }
+        else if (exports.PACKAGE_COMPONENTS[componentName]) {
+            const packageInfo = exports.PACKAGE_COMPONENTS[componentName];
+            if (!packageMap.has(packageInfo.package)) {
+                packageMap.set(packageInfo.package, { imports: new Set(), type: packageInfo.type });
+            }
+            packageMap.get(packageInfo.package).imports.add(packageInfo.import);
+        }
+        else {
+            // Treat as custom component
+            custom.push(componentName);
+        }
+    }
+    // Convert package map to array
+    for (const [packageName, info] of packageMap) {
+        packages.push({
+            package: packageName,
+            imports: Array.from(info.imports),
+            type: info.type
+        });
+    }
+    return {
+        reactNative: [...new Set(reactNative)], // Remove duplicates
+        packages,
+        custom
+    };
+}
+// Style props remain the same but more flexible
 exports.STYLE_PROPS = new Set([
     // Layout
     'flex', 'flexGrow', 'flexShrink', 'flexBasis',
@@ -88,29 +146,29 @@ exports.STYLE_PROPS = new Set([
     // Animation
     'animated', 'duration', 'delay', 'easing'
 ]);
+// More flexible component props - allows any prop to be passed through
 exports.COMPONENT_PROPS = {
     View: new Set(['onPress', 'onLongPress', 'onLayout']),
     Text: new Set(['numberOfLines', 'ellipsizeMode', 'selectable']),
-    Input: new Set([
+    TextInput: new Set([
         'value', 'onChangeText', 'placeholder', 'secureTextEntry',
         'keyboardType', 'autoCapitalize', 'autoCorrect', 'multiline',
         'maxLength', 'editable', 'onFocus', 'onBlur', 'onSubmit'
     ]),
-    Button: new Set([
-        'onPress', 'onLongPress', 'disabled', 'loading',
-        'icon', 'iconPosition', 'variant', 'size'
+    TouchableOpacity: new Set([
+        'onPress', 'onLongPress', 'disabled', 'activeOpacity'
     ]),
     Image: new Set([
         'source', 'resizeMode', 'onLoad', 'onError',
         'fadeDuration', 'progressiveRenderingEnabled'
     ]),
-    List: new Set([
+    FlatList: new Set([
         'data', 'renderItem', 'keyExtractor', 'onRefresh',
         'refreshing', 'onEndReached', 'onEndReachedThreshold'
     ]),
-    Form: new Set(['onSubmit', 'onReset', 'initialValues']),
-    Chart: new Set([
-        'data', 'type', 'width', 'height',
-        'showLegend', 'showLabels', 'showGrid'
+    // Allow any component to accept any props (flexibility for custom components)
+    '*': new Set([
+        'style', 'testID', 'accessibilityLabel', 'accessibilityHint',
+        'accessible', 'onPress', 'onLongPress', 'children'
     ])
 };

@@ -4,6 +4,12 @@ export interface IgniteNode {
     children: IgniteNode[];
     text?: string;
 }
+export interface ImportDeclaration {
+    type: 'default' | 'named' | 'namespace';
+    imports: string[];
+    from: string;
+    alias?: string;
+}
 export interface ParsedIgniteFile {
     screen: {
         title?: string;
@@ -13,6 +19,17 @@ export interface ParsedIgniteFile {
         isTabScreen?: boolean;
         headerShown?: boolean;
     };
+    imports: ImportDeclaration[];
+    states: Array<{
+        name: string;
+        initialValue: any;
+        type?: 'string' | 'number' | 'boolean' | 'object' | 'array';
+    }>;
+    functions: Array<{
+        name: string;
+        isAsync: boolean;
+        body: string;
+    }>;
     nodes: IgniteNode[];
     styles?: string;
     rawStylesheet?: string;
