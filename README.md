@@ -181,8 +181,223 @@ import * as Three from 'three'
 ## Installation
 
 ```bash
-npm install ignite
+npm install -g the-ignite
 ```
+
+## CLI Commands
+
+Ignite provides a powerful command-line interface to create, develop, and build your applications.
+
+### Available Commands
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `ignite create <name>` | Create a new Ignite app | `ignite create my-app` |
+| `ignite dev` | Start development server | `ignite dev` |
+| `ignite dev --android` | Start development server for Android | `ignite dev -a` |
+| `ignite dev --ios` | Start development server for iOS | `ignite dev -i` |
+| `ignite build` | Build for production | `ignite build` |
+| `ignite build --android` | Build for Android | `ignite build -a` |
+| `ignite build --ios` | Build for iOS | `ignite build -i` |
+
+### Command Details
+
+#### `ignite create <name>`
+Creates a new Ignite application with a complete project structure.
+
+**What it does:**
+- Creates a new directory with your app name
+- Sets up a complete Expo project with React Navigation
+- Downloads starter `.ignite` files (Home, About, Developers screens)
+- Downloads app assets (icons, splash screen)
+- Installs all necessary dependencies
+- Creates configuration files (babel.config.js, app.config.js, App.js)
+
+**Generated Project Structure:**
+```
+my-app/
+├── app/
+│   └── (tabs)/
+│       ├── Home/
+│       │   └── index.ignite
+│       ├── About/
+│       │   └── index.ignite
+│       └── Developers/
+│           └── index.ignite
+├── assets/
+│   ├── icon.png
+│   ├── adaptive-icon.png
+│   └── splash.png
+├── .ignite/          # Generated React Native files
+├── package.json      # Dependencies and scripts
+├── babel.config.js   # Babel configuration
+├── app.config.js     # Expo configuration
+├── App.js           # Main app entry point
+└── ignite.json      # Ignite project configuration
+```
+
+**Example:**
+```bash
+ignite create my-awesome-app
+cd my-awesome-app
+```
+
+#### `ignite dev`
+Starts the development server with hot reloading and file watching.
+
+**What it does:**
+- Compiles all `.ignite` files to React Native components
+- Starts file watcher for automatic recompilation
+- Launches Expo development server
+- Provides real-time feedback and error handling
+
+**Options:**
+- `--android` or `-a`: Opens the app on Android emulator/device
+- `--ios` or `-i`: Opens the app on iOS simulator/device
+
+**Example:**
+```bash
+# Start development server
+ignite dev
+
+# Start with Android
+ignite dev --android
+
+# Start with iOS
+ignite dev --ios
+```
+
+**Development Workflow:**
+1. Edit `.ignite` files in the `app/` directory
+2. Changes are automatically compiled to `.ignite/` directory
+3. Expo hot reloads the changes instantly
+4. See results immediately on your device/simulator
+
+#### `ignite build`
+Builds your application for production deployment.
+
+**What it does:**
+- Compiles all `.ignite` files
+- Sets up EAS Build configuration (if not present)
+- Builds for specified platforms using Expo Application Services (EAS)
+- Creates production-ready app bundles
+
+**Options:**
+- `--android` or `-a`: Build only for Android
+- `--ios` or `-i`: Build only for iOS
+- No options: Build for both platforms
+
+**Example:**
+```bash
+# Build for all platforms
+ignite build
+
+# Build for Android only
+ignite build --android
+
+# Build for iOS only
+ignite build --ios
+```
+
+**Build Output:**
+- Android: APK/AAB files via EAS Build
+- iOS: IPA files via EAS Build
+- Web: Static files in `web-build/` directory
+
+### Project Structure After Creation
+
+When you run `ignite create <name>`, you get a complete project with:
+
+```
+my-app/
+├── app/                          # Your .ignite source files
+│   └── (tabs)/                   # Tab navigation screens
+│       ├── Home/
+│       │   └── index.ignite      # Home screen with welcome content
+│       ├── About/
+│       │   └── index.ignite      # About screen with app info
+│       └── Developers/
+│           └── index.ignite      # Developers screen with team info
+├── assets/                       # App assets
+│   ├── icon.png                  # App icon
+│   ├── adaptive-icon.png         # Android adaptive icon
+│   └── splash.png                # Splash screen
+├── .ignite/                      # Generated React Native files
+│   ├── screens/                  # Compiled screen components
+│   │   ├── HomeIndex.js
+│   │   ├── AboutIndex.js
+│   │   └── DevelopersIndex.js
+│   └── router.js                 # Navigation configuration
+├── package.json                  # Dependencies and scripts
+├── babel.config.js              # Babel configuration
+├── app.config.js                # Expo configuration
+├── App.js                       # Main app entry point
+└── ignite.json                  # Ignite project metadata
+```
+
+### Dependencies Installed
+
+The `create` command automatically installs:
+
+**Core Dependencies:**
+- `expo` - Expo framework
+- `react` & `react-dom` - React core
+- `react-native` - React Native
+- `@react-navigation/native` - Navigation library
+- `@react-navigation/stack` - Stack navigator
+- `@react-navigation/bottom-tabs` - Tab navigator
+- `@expo/vector-icons` - Icon library
+
+**Development Dependencies:**
+- `@babel/core` - Babel compiler
+- `@types/react` - TypeScript types
+- `typescript` - TypeScript support
+
+### Getting Started Workflow
+
+1. **Create a new project:**
+   ```bash
+   ignite create my-app
+   cd my-app
+   ```
+
+2. **Start development:**
+   ```bash
+   ignite dev
+   ```
+
+3. **Edit your screens:**
+   - Open `app/(tabs)/Home/index.ignite`
+   - Make changes to the `.ignite` file
+   - See changes instantly in your app
+
+4. **Build for production:**
+   ```bash
+   ignite build --android
+   ignite build --ios
+   ```
+
+### Troubleshooting
+
+**Common Issues:**
+
+1. **"This is not an Ignite project"**
+   - Make sure you're in the correct directory
+   - Check for `ignite.json` file in project root
+
+2. **"App directory not found"**
+   - Ensure you have an `app/` directory with `.ignite` files
+   - Run `ignite create` to set up a new project
+
+3. **Build failures**
+   - Check your EAS Build configuration
+   - Ensure you have proper Expo account setup
+   - Verify all dependencies are installed
+
+**Getting Help:**
+- Check the generated files in `.ignite/` directory
+- Review Expo documentation for platform-specific issues
+- Ensure all dependencies are properly installed with `npm install`
 
 ## Usage
 
