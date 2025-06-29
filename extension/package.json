@@ -2,7 +2,7 @@
   "name": "ignite-syntax",
   "displayName": "Ignite Syntax Highlighting",
   "description": "Syntax highlighting and icon for .ignite files used in Ignite projects.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "KingJethro",
   "author": {
     "name": "King Jethro",
