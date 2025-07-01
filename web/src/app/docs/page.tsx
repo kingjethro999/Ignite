@@ -29,157 +29,59 @@ const docSections = [
 
 const gettingStartedContent = (
   <div className="prose prose-invert max-w-none text-ignite-offwhite/90 text-lg">
-    <h3>Install Ignite</h3>
+    <h3>Install Ignite Globally</h3>
     <CodeBlock code={`npm install -g the-ignite`} />
+    <p>The Ignite CLI provides everything you need to create, develop, and build cross-platform mobile apps using declarative .ignite syntax.</p>
+    
     <h3>Create a New Project</h3>
     <CodeBlock code={`ignite create my-app\ncd my-app`} />
-    <h3>Start Development</h3>
-    <CodeBlock code={`ignite dev`} />
-    <h3>Edit Your App</h3>
-    <ul className="space-y-2 mb-4">
-      <li className="pb-2">Edit <code>app/(tabs)/Home/index.ignite</code> and other <code>.ignite</code> files in the <code>app/</code> directory.</li>
-      <li className="pb-2">Changes are compiled automatically and hot-reloaded in Expo.</li>
+    <p>This command creates a new Expo project with:</p>
+    <ul>
+      <li>Pre-configured React Navigation with bottom tabs</li>
+      <li>Sample .ignite files in the app/(tabs) directory</li>
+      <li>Assets (app icon, splash screen, adaptive icon) downloaded from Cloudinary</li>
+      <li>Complete Expo setup with TypeScript support</li>
+      <li>Dependencies: Expo, React Navigation, React Native Gesture Handler, and more</li>
     </ul>
+    
+    <h3>Start Development Server</h3>
+    <CodeBlock code={`ignite dev`} />
+    <p>This starts the complete development workflow:</p>
+    <ul>
+      <li>Compiles all .ignite files to React Native components</li>
+      <li>Starts file watcher for automatic recompilation</li>
+      <li>Launches Expo development server</li>
+      <li>Provides hot reloading for instant feedback</li>
+    </ul>
+    
+    <h3>Platform-Specific Development</h3>
+    <CodeBlock code={`ignite dev --android    # or -a\nignite dev --ios        # or -i`} />
+    
+    <h3>Edit Your App</h3>
+    <p>Your app structure will look like this:</p>
+    <CodeBlock code={`my-app/\n├── app/\n│   └── (tabs)/\n│       ├── Home/\n│       │   └── index.ignite       # Your main screen\n│       ├── About/\n│       │   └── index.ignite       # About screen\n│       └── Developers/\n│           └── index.ignite       # Developers screen\n├── assets/\n│   ├── icon.png                   # App icon\n│   ├── adaptive-icon.png          # Android adaptive icon\n│   └── splash.png                  # Splash screen image\n├── .ignite/\n│   ├── screens/                   # Generated React Native components\n│   └── router.js                  # Generated navigation config\n├── App.js                         # Main app entry point\n├── app.config.js                  # Expo configuration\n├── babel.config.js                 # Babel configuration\n├── package.json                    # Dependencies and scripts\n└── ignite.json                     # Ignite project configuration`} />
+    
     <h3>Build for Production</h3>
     <CodeBlock code={`ignite build --android\nignite build --ios`} />
-    <h3>Project Structure</h3>
-    <CodeBlock code={`my-app/\n├── app/\n│   └── (tabs)/\n│       ├── Home/\n│       │   └── index.ignite\n│       ├── About/\n│       │   └── index.ignite\n│       └── Developers/\n│           └── index.ignite\n├── assets/\n│   ├── icon.png\n│   ├── adaptive-icon.png\n│   └── splash.png\n├── .ignite/\n│   ├── screens/\n│   │   ├── HomeIndex.js\n│   │   ├── AboutIndex.js\n│   │   └── DevelopersIndex.js\n│   └── router.js\n├── package.json\n├── babel.config.js\n├── app.config.js\n├── App.js\n└── ignite.json`} />
-  </div>
-);
-
-const cliContent = (
-  <div className="prose prose-invert max-w-none text-ignite-offwhite/90 text-lg">
-    <h3>CLI Commands</h3>
-    <p>Ignite provides a powerful command-line interface to create, develop, and build your applications.</p>
-    <table className="table-auto w-full text-left mb-6">
-      <thead>
-        <tr>
-          <th className="pr-4">Command</th>
-          <th className="pr-4">Description</th>
-          <th>Usage</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><code>ignite create &lt;name&gt;</code></td>
-          <td>Create a new Ignite app</td>
-          <td><CodeBlock code={`ignite create my-app`} /></td>
-        </tr>
-        <tr>
-          <td><code>ignite dev</code></td>
-          <td>Start development server</td>
-          <td><CodeBlock code={`ignite dev`} /></td>
-        </tr>
-        <tr>
-          <td><code>ignite dev --android</code></td>
-          <td>Start dev server for Android</td>
-          <td><CodeBlock code={`ignite dev -a`} /></td>
-        </tr>
-        <tr>
-          <td><code>ignite dev --ios</code></td>
-          <td>Start dev server for iOS</td>
-          <td><CodeBlock code={`ignite dev -i`} /></td>
-        </tr>
-        <tr>
-          <td><code>ignite build</code></td>
-          <td>Build for production</td>
-          <td><CodeBlock code={`ignite build`} /></td>
-        </tr>
-        <tr>
-          <td><code>ignite build --android</code></td>
-          <td>Build for Android</td>
-          <td><CodeBlock code={`ignite build -a`} /></td>
-        </tr>
-        <tr>
-          <td><code>ignite build --ios</code></td>
-          <td>Build for iOS</td>
-          <td><CodeBlock code={`ignite build -i`} /></td>
-        </tr>
-      </tbody>
-    </table>
-    <h4>Command Details</h4>
-    <ul className="space-y-2 mb-4">
-      <li className="pb-2"><b>ignite create &lt;name&gt;:</b> Sets up a new Expo project, downloads starter <code>.ignite</code> files, assets, and installs dependencies.</li>
-      <li className="pb-2"><b>ignite dev:</b> Compiles <code>.ignite</code> files, starts file watcher, launches Expo dev server, and hot reloads changes.</li>
-      <li className="pb-2"><b>ignite build:</b> Compiles <code>.ignite</code> files and builds for Android/iOS using EAS Build.</li>
-    </ul>
-    <h4>Development Workflow</h4>
-    <ol className="space-y-2 mb-4">
-      <li className="pb-2">Edit <code>.ignite</code> files in <code>app/</code></li>
-      <li className="pb-2">Changes are compiled to <code>.ignite/</code> directory</li>
-      <li className="pb-2">Expo hot reloads changes instantly</li>
-      <li className="pb-2">See results on your device/simulator</li>
-    </ol>
-    <h4>Troubleshooting</h4>
-    <ul className="space-y-2 mb-4">
-      <li className="pb-2"><b>"This is not an Ignite project"</b>: Check for <code>ignite.json</code> in project root.</li>
-      <li className="pb-2"><b>"App directory not found"</b>: Ensure <code>app/</code> exists with <code>.ignite</code> files.</li>
-      <li className="pb-2"><b>Build failures</b>: Check EAS Build config, Expo account, and dependencies.</li>
-    </ul>
-  </div>
-);
-
-const projectStructureContent = (
-  <div className="prose prose-invert max-w-none text-ignite-offwhite/90 text-lg">
-    <h3>Project Structure</h3>
-    <p>When you create a new Ignite project, you get a complete Expo/React Native structure:</p>
-    <CodeBlock code={`my-app/
-├── app/
-│   └── (tabs)/
-│       ├── Home/
-│       │   └── index.ignite
-│       ├── About/
-│       │   └── index.ignite
-│       └── Developers/
-│           └── index.ignite
-├── assets/
-│   ├── icon.png
-│   ├── adaptive-icon.png
-│   └── splash.png
-├── .ignite/
-│   ├── screens/
-│   │   ├── HomeIndex.js
-│   │   ├── AboutIndex.js
-│   │   └── DevelopersIndex.js
-│   └── router.js
-├── package.json
-├── babel.config.js
-├── app.config.js
-├── App.js
-└── ignite.json`} />
-    <ul className="space-y-2 mb-4">
-      <li className="pb-2"><b>app/</b>: Your source <code>.ignite</code> files</li>
-      <li className="pb-2"><b>assets/</b>: App icons, splash, images</li>
-      <li className="pb-2"><b>.ignite/</b>: Generated React Native code</li>
-      <li className="pb-2"><b>package.json</b>: Project dependencies</li>
-      <li className="pb-2"><b>ignite.json</b>: Ignite project config</li>
-    </ul>
-  </div>
-);
-
-const usageContent = (
-  <div className="prose prose-invert max-w-none text-ignite-offwhite/90 text-lg">
-    <h3>Basic Usage</h3>
-    <p>Create <code>.ignite</code> files in your <code>app/</code> directory. Example:</p>
+    
+    <h3>Your First .ignite File</h3>
+    <p>Edit app/(tabs)/Home/index.ignite:</p>
     <CodeBlock code={`import { LinearGradient } from 'expo-linear-gradient'
-import firebase from 'firebase'
 
 screen title="Home" isTabScreen="true" tabOrder="1" tabIcon="home"
 
-state user=null
-state loading=false
+state count=0
+state message="Hello World"
 
-async handleLogin() {
-  const result = await firebase.auth().signInWithEmailAndPassword(email, password)
-  setUser(result.user)
-  go('/profile')
+handleIncrement() {
+  setCount(count + 1)
 }
 
 <View style="container">
   <LinearGradient colors={['#ff6b6b', '#4ecdc4']} style="gradient">
-    <Text style="title">Welcome to Ignite</Text>
-    <Input bind="username" placeholder="Enter username" />
-    <Button onPress="handleLogin()">Login</Button>
+    <Text style="title">{message}</Text>
+    <Text style="counter">Count: {count}</Text>
+    <Button onPress="handleIncrement()">Increment</Button>
   </LinearGradient>
 </View>
 
@@ -191,37 +93,469 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  counter: {
+    fontSize: 18,
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 20,
   },
   gradient: {
     flex: 1,
     borderRadius: 10,
+    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });`} />
+  <p>Changes are automatically compiled and hot-reloaded in your Expo app!</p>
+  </div>
+);
+
+const cliContent = (
+  <div className="prose prose-invert max-w-none text-ignite-offwhite/90 text-lg">
+    <h3>CLI Commands</h3>
+    <p>Ignite provides a powerful command-line interface built with Commander.js for creating, developing, and building your applications.</p>
+    
+    <h4>Core Commands</h4>
+    <table className="table-auto w-full text-left mb-6 border-collapse">
+      <thead>
+        <tr className="border-b border-ignite-darkred/20">
+          <th className="pr-4 pb-2 text-ignite-orange">Command</th>
+          <th className="pr-4 pb-2 text-ignite-orange">Description</th>
+          <th className="pb-2 text-ignite-orange">Usage</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr className="border-b border-ignite-darkred/10">
+          <td className="pr-4 py-2"><code>ignite create &lt;name&gt;</code></td>
+          <td className="pr-4 py-2">Create a new Ignite app with Expo setup</td>
+          <td className="py-2"><code>ignite create my-app</code></td>
+        </tr>
+        <tr className="border-b border-ignite-darkred/10">
+          <td className="pr-4 py-2"><code>ignite dev</code></td>
+          <td className="pr-4 py-2">Start development server with compilation</td>
+          <td className="py-2"><code>ignite dev</code></td>
+        </tr>
+        <tr className="border-b border-ignite-darkred/10">
+          <td className="pr-4 py-2"><code>ignite dev --android</code></td>
+          <td className="pr-4 py-2">Start development server for Android</td>
+          <td className="py-2"><code>ignite dev -a</code></td>
+        </tr>
+        <tr className="border-b border-ignite-darkred/10">
+          <td className="pr-4 py-2"><code>ignite dev --ios</code></td>
+          <td className="pr-4 py-2">Start development server for iOS</td>
+          <td className="py-2"><code>ignite dev -i</code></td>
+        </tr>
+        <tr className="border-b border-ignite-darkred/10">
+          <td className="pr-4 py-2"><code>ignite build</code></td>
+          <td className="pr-4 py-2">Build app for production</td>
+          <td className="py-2"><code>ignite build</code></td>
+        </tr>
+        <tr className="border-b border-ignite-darkred/10">
+          <td className="pr-4 py-2"><code>ignite build --android</code></td>
+          <td className="pr-4 py-2">Build for Android platform</td>
+          <td className="py-2"><code>ignite build -a</code></td>
+        </tr>
+        <tr className="border-b border-ignite-darkred/10">
+          <td className="pr-4 py-2"><code>ignite build --ios</code></td>
+          <td className="pr-4 py-2">Build for iOS platform</td>
+          <td className="py-2"><code>ignite build -i</code></td>
+        </tr>
+        <tr className="border-b border-ignite-darkred/10">
+          <td className="pr-4 py-2"><code>ignite -v</code></td>
+          <td className="pr-4 py-2">Show version information</td>
+          <td className="py-2"><code>ignite v</code></td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <h4>What Happens During ignite create</h4>
     <ol className="space-y-2 mb-4">
-      <li className="pb-2">Edit <code>.ignite</code> files</li>
-      <li className="pb-2">Run <CodeBlock code={`ignite dev`} /></li>
-      <li className="pb-2">See changes instantly in Expo</li>
+      <li><strong>Project Setup:</strong> Creates Expo project with TypeScript support</li>
+      <li><strong>Directory Structure:</strong> Sets up app/(tabs) directory structure</li>
+      <li><strong>Dependencies:</strong> Installs Expo, React Navigation, React Native Gesture Handler, and more</li>
+      <li><strong>Assets Download:</strong> Downloads app icon, splash screen, and adaptive icon from Cloudinary</li>
+      <li><strong>Screen Files:</strong> Downloads sample Home, About, and Developers .ignite files</li>
+      <li><strong>Configuration:</strong> Sets up babel.config.js, app.config.js, and ignite.json</li>
+      <li><strong>Main App:</strong> Creates App.js with NavigationContainer and Router</li>
+    </ol>
+    
+    <h4>What Happens During ignite dev</h4>
+    <ol className="space-y-2 mb-4">
+      <li><strong>Project Validation:</strong> Checks for ignite.json and app/ directory</li>
+      <li><strong>Initial Compilation:</strong> Compiles all .ignite files to React Native components</li>
+      <li><strong>File Watcher:</strong> Starts watching for changes in .ignite files</li>
+      <li><strong>Router Generation:</strong> Creates navigation configuration based on file structure</li>
+      <li><strong>Expo Server:</strong> Launches Expo development server</li>
+      <li><strong>Platform Launch:</strong> Optionally launches Android/iOS app</li>
+    </ol>
+    
+    <h4>Development Workflow</h4>
+    <ol className="space-y-2 mb-4">
+      <li><strong>Edit .ignite files</strong> in your app/ directory</li>
+      <li><strong>File watcher detects changes</strong> and triggers recompilation</li>
+      <li><strong>Generated components</strong> are saved to .ignite/ directory</li>
+      <li><strong>Expo hot reloads</strong> your app with changes</li>
+      <li><strong>See results instantly</strong> on your device/simulator</li>
+    </ol>
+    
+    <h4>Troubleshooting CLI Issues</h4>
+    <ul className="space-y-2 mb-4">
+      <li><strong>"This is not an Ignite project":</strong> Ensure you're in a directory with ignite.json</li>
+      <li><strong>"App directory not found":</strong> Create an app/ directory with .ignite files</li>
+      <li><strong>"Failed to install dependencies":</strong> Run npm install manually</li>
+      <li><strong>Build failures:</strong> Check Expo configuration and platform setup</li>
+      <li><strong>Permission errors:</strong> May need to run with sudo (not recommended) or fix npm permissions</li>
+    </ul>
+  </div>
+);
+
+const projectStructureContent = (
+  <div className="prose prose-invert max-w-none text-ignite-offwhite/90 text-lg">
+    <h3>Project Structure</h3>
+    <p>When you create a new Ignite project, you get a complete Expo/React Native structure with automatic setup:</p>
+    
+    <h4>Complete Project Layout</h4>
+    <CodeBlock code={`my-app/
+├── app/                            # Source .ignite files
+│   └── (tabs)/                     # Tab navigation screens
+│       ├── Home/
+│       │   └── index.ignite        # Home screen definition
+│       ├── About/
+│       │   └── index.ignite        # About screen definition
+│       └── Developers/
+│           └── index.ignite        # Developers screen definition
+├── assets/                         # App assets (downloaded from Cloudinary)
+│   ├── icon.png                    # App icon (512x512)
+│   ├── adaptive-icon.png           # Android adaptive icon
+│   └── splash.png                  # Splash screen image
+├── .ignite/                        # Generated React Native components
+│   ├── screens/
+│   │   ├── (tabs)/
+│   │   │   ├── Home/
+│   │   │   │   └── HomeIndex.js    # Generated Home component
+│   │   │   ├── About/
+│   │   │   │   └── AboutIndex.js   # Generated About component
+│   │   │   └── Developers/
+│   │   │       └── DevelopersIndex.js  # Generated Developers component
+│   │   └── router.js               # Generated navigation config
+├── node_modules/                   # Dependencies
+├── App.js                          # Main app entry point
+├── app.config.js                   # Expo configuration
+├── babel.config.js                 # Babel transpilation config
+├── package.json                    # Project dependencies and scripts
+├── package-lock.json               # Locked dependency versions
+└── ignite.json                     # Ignite project configuration`} />
+    
+    <h4>Key Directories Explained</h4>
+    <ul className="space-y-2 mb-4">
+      <li><strong>app/:</strong> Your source .ignite files with declarative syntax</li>
+      <li><strong>app/(tabs)/:</strong> Tab navigation screens (automatically detected)</li>
+      <li><strong>assets/:</strong> Images, icons, and other static resources</li>
+      <li><strong>.ignite/:</strong> Generated React Native components (auto-generated, don't edit)</li>
+      <li><strong>.ignite/screens/:</strong> Compiled React Native components from your .ignite files</li>
+      <li><strong>.ignite/router.js:</strong> Auto-generated navigation configuration</li>
+    </ul>
+    
+    <h4>Generated package.json</h4>
+    <p>Each Ignite project includes these dependencies:</p>
+    <CodeBlock code={`{
+  "dependencies": {
+    "expo": "^53.0.0",
+    "expo-status-bar": "~2.2.3",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-native": "^0.79.0",
+    "react-native-gesture-handler": "~2.24.0",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-screens": "~4.11.1",
+    "@react-navigation/native": "^6.1.9",
+    "@react-navigation/stack": "^6.3.20",
+    "@react-navigation/bottom-tabs": "^6.5.11",
+    "@expo/vector-icons": "^14.0.2"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  }
+}`} />
+    
+    <h4>File Structure Conventions</h4>
+    <ul className="space-y-2 mb-4">
+      <li><strong>index.ignite:</strong> Main screen files in each directory</li>
+      <li><strong>(tabs) folder:</strong> Indicates tab navigation screens</li>
+      <li><strong>Component naming:</strong> Generated components follow PascalCase (HomeIndex, AboutIndex, etc.)</li>
+      <li><strong>Route generation:</strong> Navigation routes are auto-generated from file structure</li>
+      <li><strong>Tab ordering:</strong> Use tabOrder property to control tab sequence</li>
+    </ul>
+    
+    <h4>ignite.json Configuration</h4>
+    <CodeBlock code={`{
+  "name": "my-app",
+  "version": "1.0.0",
+  "type": "ignite-app"
+}`} />
+    
+    <h4>Directory Structure Best Practices</h4>
+    <ul className="space-y-2 mb-4">
+      <li><strong>Keep .ignite files organized:</strong> Use descriptive folder names</li>
+      <li><strong>Tab screens:</strong> Place in (tabs) folder for automatic tab navigation</li>
+      <li><strong>Stack screens:</strong> Place outside (tabs) for stack navigation</li>
+      <li><strong>Don't edit .ignite/ folder:</strong> It's auto-generated and will be overwritten</li>
+      <li><strong>Assets organization:</strong> Keep images and icons in assets/ folder</li>
+    </ul>
+  </div>
+);
+
+const usageContent = (
+  <div className="prose prose-invert max-w-none text-ignite-offwhite/90 text-lg">
+    <h3>Writing .ignite Files</h3>
+    <p>Ignite uses a custom DSL (Domain Specific Language) that compiles to React Native components. Here's how to write effective .ignite files:</p>
+    
+    <h4>Basic .ignite File Structure</h4>
+    <CodeBlock code={`import { LinearGradient } from 'expo-linear-gradient'
+import firebase from 'firebase'
+
+screen title="Home" isTabScreen="true" tabOrder="1" tabIcon="home"
+
+state user=null
+state loading=false
+state count=0
+
+async handleLogin() {
+  setLoading(true)
+  try {
+    const result = await firebase.auth().signInWithEmailAndPassword(email, password)
+    setUser(result.user)
+    go('/profile')
+  } catch (error) {
+    console.log('Login failed:', error)
+  }
+  setLoading(false)
+}
+
+handleIncrement() {
+  setCount(count + 1)
+}
+
+<View style="container">
+  <LinearGradient colors={['#ff6b6b', '#4ecdc4']} style="gradient">
+    <Text style="title">Welcome {user?.name || 'Guest'}</Text>
+    <Text style="counter">Count: {count}</Text>
+    <Button onPress="handleIncrement()">Increment</Button>
+    <Button onPress="handleLogin()" disabled={loading}>
+      {loading ? 'Loading...' : 'Login'}
+    </Button>
+  </LinearGradient>
+</View>
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  counter: {
+    fontSize: 18,
+    color: 'white',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  gradient: {
+    flex: 1,
+    borderRadius: 10,
+    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});`} />
+    
+    <h4>Import Statements</h4>
+    <p>Ignite supports flexible import patterns:</p>
+    <CodeBlock code={`// Default imports
+import React from 'react'
+import firebase from 'firebase'
+
+// Named imports
+import { View, Text, Button } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
+
+// Namespace imports
+import * as Three from 'three'
+
+// Simple imports (converted to default)
+firebase
+expo-linear-gradient`} />
+    
+    <h4>Screen Declaration</h4>
+    <p>Configure screen properties:</p>
+    <CodeBlock code={`screen title="Home" isTabScreen="true" tabOrder="1" tabIcon="home" headerShown="true"`} />
+    <ul className="space-y-1 mb-4">
+      <li><strong>title:</strong> Screen title for navigation</li>
+      <li><strong>isTabScreen:</strong> Boolean indicating tab navigation</li>
+      <li><strong>tabOrder:</strong> Order in tab bar (1, 2, 3, etc.)</li>
+      <li><strong>tabIcon:</strong> Icon name for tab bar</li>
+      <li><strong>headerShown:</strong> Whether to show navigation header</li>
+    </ul>
+    
+    <h4>State Management</h4>
+    <p>Declare state with automatic type inference:</p>
+    <CodeBlock code={`state user=null          // object type
+state loading=false      // boolean type
+state count=0            // number type
+state name=""            // string type
+state items=[]           // array type
+state config={}          // object type`} />
+    
+    <h4>Function Declaration</h4>
+    <p>Write functions with async support:</p>
+    <CodeBlock code={`// Regular function
+handleIncrement() {
+  setCount(count + 1)
+}
+
+// Async function
+async handleLogin() {
+  setLoading(true)
+  try {
+    const result = await firebase.auth().signInWithEmailAndPassword(email, password)
+    setUser(result.user)
+  } catch (error) {
+    console.log('Error:', error)
+  }
+  setLoading(false)
+}
+
+// Navigation function
+goToProfile() {
+  go('/profile')
+}`} />
+    
+    <h4>Component Usage</h4>
+    <p>Use familiar React Native components with enhanced syntax:</p>
+    <CodeBlock code={`<View style="container">
+  <Text style="title">{user?.name || 'Guest'}</Text>
+  <Input 
+    bind="email" 
+    placeholder="Email" 
+    keyboardType="email-address"
+  />
+  <Button 
+    onPress="handleLogin()" 
+    disabled={loading}
+  >
+    {loading ? 'Loading...' : 'Login'}
+  </Button>
+</View>`} />
+    
+    <h4>Styling</h4>
+    <p>Include StyleSheet definitions:</p>
+    <CodeBlock code={`const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f0f0f0',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+});`} />
+    
+    <h4>Development Workflow</h4>
+    <ol className="space-y-2 mb-4">
+      <li><strong>Edit .ignite files</strong> in your app/ directory</li>
+      <li><strong>Save changes</strong> - file watcher detects modifications</li>
+      <li><strong>Automatic compilation</strong> generates React Native components</li>
+      <li><strong>Hot reload</strong> updates your app instantly</li>
+      <li><strong>See results</strong> on device/simulator in real-time</li>
     </ol>
   </div>
 );
 
 const featuresContent = (
   <div className="prose prose-invert max-w-none text-ignite-offwhite/90 text-lg">
-    <h3>Features</h3>
-    <ul className="space-y-2 mb-4">
-      <li className="pb-2"><b>Declarative Syntax:</b> XML-like component definitions</li>
-      <li className="pb-2"><b>Automatic State Management:</b> Smart state inference and generation</li>
-      <li className="pb-2"><b>Built-in Navigation:</b> Simple navigation with automatic route generation</li>
-      <li className="pb-2"><b>Style Integration:</b> Seamless stylesheet handling</li>
-      <li className="pb-2"><b>Hot Reloading:</b> Real-time compilation during development</li>
-      <li className="pb-2"><b>Advanced State Management:</b> Integration with Redux or Zustand</li>
-      <li className="pb-2"><b>Tab Navigation:</b> Easy tab-based navigation setup</li>
-      <li className="pb-2"><b>Type Safety:</b> Generated code with TypeScript support</li>
-      <li className="pb-2"><b>Flexible Imports:</b> Any npm package (default, named, namespace)</li>
-      <li className="pb-2"><b>Custom Components:</b> Use any React Native or third-party component</li>
-      <li className="pb-2"><b>Function Support:</b> Write async and regular functions in <code>.ignite</code></li>
-      <li className="pb-2"><b>Expression Support:</b> Full JSX expression support</li>
-      <li className="pb-2"><b>Package Integration:</b> Firebase, Expo, and more</li>
+    <h3>Core Features</h3>
+    <p>Ignite provides a comprehensive set of features for simplified cross-platform mobile development:</p>
+    
+    <h4>🔥 Declarative .ignite Syntax</h4>
+    <ul className="space-y-1 mb-4">
+      <li>XML-like component definitions with familiar React Native elements</li>
+      <li>Custom DSL that compiles to optimized React Native components</li>
+      <li>Support for complex JSX expressions in curly braces</li>
+      <li>Automatic component mapping (Button → TouchableOpacity, Input → TextInput)</li>
+    </ul>
+    
+    <h4>🚀 Automatic State Management</h4>
+    <ul className="space-y-1 mb-4">
+      <li>Smart state inference from initial values</li>
+      <li>Automatic useState hook generation with proper TypeScript types</li>
+      <li>Support for all JavaScript types: string, number, boolean, object, array</li>
+      <li>Automatic setter function generation (setUser, setLoading, etc.)</li>
+    </ul>
+    
+    <h4>🧭 Built-in Navigation</h4>
+    <ul className="space-y-1 mb-4">
+      <li>Automatic React Navigation setup with NavigationContainer</li>
+      <li>Tab navigation support with tabOrder and tabIcon properties</li>
+      <li>Stack navigation for non-tab screens</li>
+      <li>Route generation based on file structure and directory names</li>
+      <li>Navigation functions like go('/path') for easy screen transitions</li>
+    </ul>
+    
+    <h4>📦 Package Integration</h4>
+    <ul className="space-y-1 mb-4">
+      <li>Flexible import system supporting default, named, and namespace imports</li>
+      <li>Seamless integration with Firebase, Expo, and third-party packages</li>
+      <li>Simple package name imports automatically converted to default imports</li>
+      <li>Support for complex packages like Three.js, React Native community packages</li>
+    </ul>
+    
+    <h4>⚡ Development Experience</h4>
+    <ul className="space-y-1 mb-4">
+      <li>Hot reloading with file watching for instant feedback</li>
+      <li>Real-time compilation during development</li>
+      <li>Comprehensive error handling and validation</li>
+      <li>Generated code cleanup and optimization</li>
+      <li>TypeScript support throughout the compilation pipeline</li>
+    </ul>
+    
+    <h4>🛠️ CLI Tools</h4>
+    <ul className="space-y-1 mb-4">
+      <li>Powerful command-line interface built with Commander.js</li>
+      <li>Project scaffolding with complete Expo setup</li>
+      <li>Asset management with Cloudinary integration</li>
+      <li>Platform-specific development and building</li>
+      <li>Version management and project validation</li>
+    </ul>
+    
+    <h4>📱 Cross-Platform Support</h4>
+    <ul className="space-y-1 mb-4">
+      <li>iOS and Android support through Expo</li>
+      <li>Web support with Expo Web</li>
+      <li>Platform-specific optimizations</li>
+      <li>Consistent UI across all platforms</li>
+    </ul>
+    
+    <h4>🎨 Styling & Assets</h4>
+    <ul className="space-y-1 mb-4">
+      <li>StyleSheet.create integration with automatic imports</li>
+      <li>Asset management with automatic downloading</li>
+      <li>Support for app icons, splash screens, and adaptive icons</li>
+      <li>Flexible styling with inline styles and stylesheet references</li>
     </ul>
   </div>
 );
