@@ -38,6 +38,7 @@ const commander_1 = require("commander");
 const create_1 = require("./commands/create");
 const dev_1 = require("./commands/dev");
 const build_1 = require("./commands/build");
+const update_1 = require("./commands/update");
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const program = new commander_1.Command();
@@ -76,4 +77,8 @@ program
     .option('-a, --android', 'build for Android')
     .option('-i, --ios', 'build for iOS')
     .action(build_1.build);
+program
+    .command('update')
+    .description('Update Ignite CLI to the latest version')
+    .action(update_1.update);
 program.parse();

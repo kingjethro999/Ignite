@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import { createApp } from './commands/create';
 import { dev } from './commands/dev';
 import { build } from './commands/build';
+import { update } from './commands/update';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -51,5 +52,10 @@ program
   .option('-a, --android', 'build for Android')
   .option('-i, --ios', 'build for iOS')
   .action(build);
+
+program
+  .command('update')
+  .description('Update Ignite CLI to the latest version')
+  .action(update);
 
 program.parse(); 
