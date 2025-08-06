@@ -1,6 +1,6 @@
 {
   "name": "the-ignite",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A simplified cross-platform mobile development framework - Next.js for Mobile Apps",
   "main": "dist/index.js",
   "bin": {

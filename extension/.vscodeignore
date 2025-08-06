@@ -1,7 +1,0 @@
-node_modules
-.vscode
-.git
-.gitignore
-*.ts
-*.js.map
-*.log 
