@@ -15,7 +15,7 @@ exports.COMPONENT_MAP = {
     TextInput: 'TextInput',
     TouchableOpacity: 'TouchableOpacity',
     Switch: 'Switch',
-    Button: 'Button',
+    Button: 'TouchableOpacity',
     ActivityIndicator: 'ActivityIndicator',
     Modal: 'Modal',
     SafeAreaView: 'SafeAreaView',

@@ -9,7 +9,7 @@ export const COMPONENT_MAP: Record<string, string> = {
   TextInput: 'TextInput',
   TouchableOpacity: 'TouchableOpacity',
   Switch: 'Switch',
-  Button: 'Button',
+  Button: 'TouchableOpacity',
   ActivityIndicator: 'ActivityIndicator',
   Modal: 'Modal',
   SafeAreaView: 'SafeAreaView',
