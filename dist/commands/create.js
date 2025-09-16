@@ -16,9 +16,9 @@ const CLOUDINARY_IMAGES = {
     splash: 'https://res.cloudinary.com/dcrh78d8z/image/upload/v1749708860/ignite_zzafoh.png'
 };
 const CLOUDINARY_SCREENS = {
-    home: 'https://res.cloudinary.com/dcrh78d8z/raw/upload/v1750042388/index_zwi6rv.ignite',
-    about: 'https://res.cloudinary.com/dcrh78d8z/raw/upload/v1750042428/index_mmtcyu.ignite',
-    developers: 'https://res.cloudinary.com/dcrh78d8z/raw/upload/v1750042454/index_uwsehe.ignite'
+    home: 'https://res.cloudinary.com/dcrh78d8z/raw/upload/v1754562136/index_pz6d9t.ignite',
+    about: 'https://res.cloudinary.com/dcrh78d8z/raw/upload/v1754562260/index_dzlmcw.ignite',
+    developers: 'https://res.cloudinary.com/dcrh78d8z/raw/upload/v1754562191/index_vcqenx.ignite'
 };
 async function downloadFile(url, outputPath) {
     try {
@@ -132,6 +132,26 @@ async function createApp(name) {
     (0, fs_1.mkdirSync)('.ignite', { recursive: true });
     // Download screen files from Cloudinary
     await downloadScreenFiles(appDir);
+    // After downloading screen files, create a default tabs.style file
+    const tabsStylePath = (0, path_1.join)(appDir, 'app/(tabs)/tabs.style');
+    if (!(0, fs_1.existsSync)(tabsStylePath)) {
+        (0, fs_1.writeFileSync)(tabsStylePath, `@styles {
+  tabBarStyle: {
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    height: 60,
+    paddingBottom: 5,
+  },
+  tabBarLabelStyle: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  tabBarActiveTintColor: '#007AFF',
+  tabBarInactiveTintColor: 'gray',
+}
+`);
+    }
     // Create babel.config.js
     (0, fs_1.writeFileSync)('babel.config.js', `module.exports = function(api) {
   api.cache(true);

@@ -12,9 +12,9 @@ const CLOUDINARY_IMAGES = {
 };
 
 const CLOUDINARY_SCREENS = {
-  home: 'https://res.cloudinary.com/dcrh78d8z/raw/upload/v1750042388/index_zwi6rv.ignite',
-  about: 'https://res.cloudinary.com/dcrh78d8z/raw/upload/v1750042428/index_mmtcyu.ignite',
-  developers: 'https://res.cloudinary.com/dcrh78d8z/raw/upload/v1750042454/index_uwsehe.ignite'
+  home: 'https://res.cloudinary.com/dcrh78d8z/raw/upload/v1754562136/index_pz6d9t.ignite',
+  about: 'https://res.cloudinary.com/dcrh78d8z/raw/upload/v1754562260/index_dzlmcw.ignite',
+  developers: 'https://res.cloudinary.com/dcrh78d8z/raw/upload/v1754562191/index_vcqenx.ignite'
 };
 
 async function downloadFile(url: string, outputPath: string): Promise<void> {
@@ -141,6 +141,27 @@ export async function createApp(name: string): Promise<void> {
 
   // Download screen files from Cloudinary
   await downloadScreenFiles(appDir);
+
+  // After downloading screen files, create a default tabs.style file
+  const tabsStylePath = join(appDir, 'app/(tabs)/tabs.style');
+  if (!existsSync(tabsStylePath)) {
+    writeFileSync(tabsStylePath, `@styles {
+  tabBarStyle: {
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    height: 60,
+    paddingBottom: 5,
+  },
+  tabBarLabelStyle: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  tabBarActiveTintColor: '#007AFF',
+  tabBarInactiveTintColor: 'gray',
+}
+`);
+  }
 
   // Create babel.config.js
   writeFileSync(
